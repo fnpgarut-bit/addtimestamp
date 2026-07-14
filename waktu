@@ -1,0 +1,460 @@
+:Photo Timestamp Editor:index.html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Timestamp Editor</title>
+  
+  <!-- STREAMING_CHUNK: Loading external libraries and styles... -->
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600;700&family=Roboto+Mono:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col pb-12">
+
+  <!-- STREAMING_CHUNK: Rendering header navigation bar... -->
+  <!-- Header / Navbar -->
+  <header class="bg-indigo-950 text-white shadow-md py-4 px-6 mb-6">
+    <div class="max-w-4xl mx-auto flex items-center justify-center">
+      <div class="flex items-center space-x-3">
+        <div class="bg-indigo-600 p-2 rounded-lg text-white">
+          <i class="fa-solid fa-camera-retro text-xl"></i>
+        </div>
+        <span class="font-bold text-lg tracking-wider uppercase">Photo Timestamp Editor</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- STREAMING_CHUNK: Setting up the layout container... -->
+  <!-- Main Container -->
+  <main class="flex-grow container mx-auto px-4 max-w-2xl">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 md:p-8">
+      
+      <!-- Preview Container -->
+      <div class="mb-6 flex flex-col items-center">
+        <div class="relative w-full bg-slate-50 rounded-xl overflow-hidden border-2 border-dashed border-slate-300 flex flex-col items-center justify-center min-h-[250px] md:min-h-[350px]">
+          <!-- Placeholder View -->
+          <div id="placeholderText" class="p-8 text-center flex flex-col items-center">
+            <i class="fa-regular fa-image text-5xl text-slate-400 mb-3"></i>
+            <h3 class="text-md font-semibold text-slate-700">Belum Ada Foto</h3>
+            <p class="text-xs text-slate-500 mt-1">Gunakan tombol di bawah untuk mengambil atau mengunggah foto</p>
+          </div>
+          
+          <!-- Interactive Canvas Preview -->
+          <div class="w-full overflow-auto flex justify-center">
+            <canvas id="canvasPreview" class="hidden max-w-full h-auto shadow-md rounded-lg object-contain"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- STREAMING_CHUNK: Styling native input for iframe bypass... -->
+      <!-- Tombol Upload (NATIVE FIX FOR APPSCRIPT SANDBOX IFRAME) -->
+      <div class="mb-6">
+        <label class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">Pilih atau Ambil Foto Baru:</label>
+        <!-- Menggunakan Tailwind file modifier untuk menghias input file asli tanpa manipulasi click Javascript -->
+        <input type="file" id="inputFoto" accept="image/*" class="block w-full text-sm text-slate-500 bg-slate-50 border border-slate-300 rounded-xl shadow-sm cursor-pointer focus:outline-none file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 transition-all file:cursor-pointer p-1">
+      </div>
+
+      <hr class="border-slate-200 mb-6">
+
+      <!-- STREAMING_CHUNK: Configuring forms control... -->
+      <!-- Controls Form -->
+      <form id="formTimestamp" onsubmit="event.preventDefault();" class="space-y-6">
+        
+        <!-- SEKSI WAKTU -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <h3 class="font-bold text-slate-800 text-xs tracking-wider uppercase mb-3 flex items-center">
+            <i class="fa-regular fa-clock text-indigo-600 mr-2 text-sm"></i> Edit Timestamp
+          </h3>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal</label>
+              <input type="date" id="inputTanggal" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Waktu</label>
+              <input type="time" id="inputJam" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- SEKSI LOKASI -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <h3 class="font-bold text-slate-800 text-xs tracking-wider uppercase mb-3 flex items-center">
+            <i class="fa-solid fa-location-dot text-indigo-600 mr-2 text-sm"></i> Edit Lokasi (Pencarian Presisi)
+          </h3>
+          <div class="relative">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Tempat / Alamat Lengkap</label>
+            <div class="flex shadow-sm rounded-lg overflow-hidden">
+              <span class="bg-white border-y border-l border-slate-300 pl-3 pr-2 flex items-center text-slate-400">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </span>
+              <input type="text" id="inputAlamat" class="w-full bg-white border border-slate-300 rounded-none px-2 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500" placeholder="Ketik nama jalan, toko, atau daerah..." autocomplete="off">
+              <button class="bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-slate-300 border-l-0 px-4 transition-colors" type="button" id="btnGPS" title="Gunakan GPS Perangkat">
+                <i class="fa-solid fa-location-crosshairs"></i>
+              </button>
+            </div>
+            <!-- Dropdown Rekomendasi Alamat -->
+            <div id="autocompleteList" class="absolute z-50 left-0 right-0 max-h-60 overflow-y-auto bg-white border border-slate-200 rounded-b-lg shadow-lg hidden"></div>
+          </div>
+        </div>
+
+        <!-- STREAMING_CHUNK: Styling customization options... -->
+        <!-- SEKSI GAYA WATERMARK -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <h3 class="font-bold text-slate-800 text-xs tracking-wider uppercase mb-3 flex items-center">
+            <i class="fa-solid fa-palette text-indigo-600 mr-2 text-sm"></i> Style Settings
+          </h3>
+          
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Jenis Huruf (Font)</label>
+              <select id="selectFont" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500">
+                <option value="Open Sans">Open Sans</option>
+                <option value="Montserrat">Montserrat</option>
+                <option value="Roboto">Roboto</option>
+                <option value="Courier Prime">Courier New</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Warna Teks</label>
+              <select id="selectWarna" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500">
+                <option value="#ffffff">Putih (White)</option>
+                <option value="#ffdf00">Kuning (Yellow)</option>
+                <option value="#ff4d4d">Merah (Red)</option>
+                <option value="#000000">Hitam (Black)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Posisi Stempel</label>
+              <select id="selectPosisi" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500">
+                <option value="bottom-right">Kanan Bawah</option>
+                <option value="bottom-left">Kiri Bawah</option>
+                <option value="top-right">Kanan Atas</option>
+                <option value="top-left">Kiri Atas</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Kotak Latar</label>
+              <select id="selectBg" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500">
+                <option value="rgba(0,0,0,0.5)">Hitam Transparan (50%)</option>
+                <option value="rgba(0,0,0,0.8)">Hitam Pekat (80%)</option>
+                <option value="none">Tanpa Kotak (No Box)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-xs font-semibold text-slate-600">Ukuran Teks</label>
+              <span id="labelUkuran" class="text-xs text-indigo-700 font-bold">Sedang</span>
+            </div>
+            <input type="range" id="sliderUkuran" class="w-full accent-indigo-600" min="15" max="60" value="30">
+          </div>
+        </div>
+
+        <!-- STREAMING_CHUNK: Providing download buttons... -->
+        <!-- TOMBOL UNDUH -->
+        <div>
+          <button type="button" id="btnDownload" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-center py-3 px-4 rounded-xl font-bold flex items-center justify-center shadow-lg shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all" disabled>
+            <i class="fa-solid fa-floppy-disk mr-2"></i>
+            <span>SAVE & DOWNLOAD FOTO</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </main>
+
+  <!-- STREAMING_CHUNK: Initializing JavaScript application logic... -->
+  <!-- JavaScript Logic -->
+  <script>
+    // Inisialisasi Tanggal & Jam saat ini ke Form
+    const today = new Date();
+    document.getElementById('inputTanggal').value = today.toISOString().substring(0, 10);
+    document.getElementById('inputJam').value = today.toTimeString().substring(0, 5);
+
+    // DOM Elements
+    const inputFoto = document.getElementById('inputFoto');
+    const canvas = document.getElementById('canvasPreview');
+    const ctx = canvas.getContext('2d');
+    const placeholderText = document.getElementById('placeholderText');
+    const inputAlamat = document.getElementById('inputAlamat');
+    const autocompleteList = document.getElementById('autocompleteList');
+    const btnGPS = document.getElementById('btnGPS');
+    const btnDownload = document.getElementById('btnDownload');
+    const labelUkuran = document.getElementById('labelUkuran');
+
+    let imgObj = null; 
+    let searchTimeout = null;
+
+    // Menghubungkan semua kontrol agar re-render secara langsung (Live Update)
+    const controls = ['inputTanggal', 'inputJam', 'inputAlamat', 'selectFont', 'selectWarna', 'selectPosisi', 'selectBg', 'sliderUkuran'];
+    controls.forEach(id => {
+      document.getElementById(id).addEventListener('input', drawWatermark);
+    });
+
+    // 1. Tangani Upload Gambar secara NATIVE & AMAN untuk iFrame
+    inputFoto.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        imgObj = new Image();
+        imgObj.onload = function() {
+          // Atur resolusi canvas sesuai resolusi asli foto (agar hasil download tajam/tidak pecah)
+          canvas.width = imgObj.width;
+          canvas.height = imgObj.height;
+          
+          placeholderText.classList.add('hidden');
+          canvas.classList.remove('hidden');
+          btnDownload.disabled = false;
+          
+          drawWatermark();
+        };
+        imgObj.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // 2. Fungsi Text-Wrapping agar Alamat panjang turun ke baris baru
+    function wrapText(context, text, maxWidth) {
+      const words = text.split(' ');
+      const lines = [];
+      let currentLine = words[0] || '';
+
+      for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = context.measureText(currentLine + " " + word).width;
+        if (width < maxWidth) {
+          currentLine += " " + word;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      lines.push(currentLine);
+      return lines;
+    }
+
+    // STREAMING_CHUNK: Implementing watermarking canvas logic...
+    // 3. Render Gambar + Watermark
+    function drawWatermark() {
+      if (!imgObj) return;
+
+      // Reset canvas dan gambar ulang foto asli
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(imgObj, 0, 0, canvas.width, canvas.height);
+
+      // Ambil nilai data dari Form
+      const tanggal = document.getElementById('inputTanggal').value;
+      const jam = document.getElementById('inputJam').value;
+      const alamat = document.getElementById('inputAlamat').value;
+      const fontName = document.getElementById('selectFont').value;
+      const warnaTeks = document.getElementById('selectWarna').value;
+      const posisi = document.getElementById('selectPosisi').value;
+      const bgStyle = document.getElementById('selectBg').value;
+      
+      // Update Label Ukuran Teks Slider
+      const sliderVal = document.getElementById('sliderUkuran').value;
+      if (sliderVal < 25) labelUkuran.textContent = "Kecil";
+      else if (sliderVal < 45) labelUkuran.textContent = "Sedang";
+      else labelUkuran.textContent = "Besar";
+
+      // Hitung ukuran font proporsional terhadap resolusi asli gambar
+      const fontSize = Math.round((canvas.width / 1000) * sliderVal); 
+      ctx.font = `bold ${fontSize}px '${fontName}', sans-serif`;
+
+      const margin = canvas.width * 0.03; // Margin aman 3% dari tepi foto
+      const padding = fontSize * 0.6;
+      const lineSpacing = fontSize * 1.35;
+      
+      // Maksimal lebar teks adalah 45% dari lebar foto agar tidak kepanjangan kesamping
+      const maxTextWidth = canvas.width * 0.45;
+
+      // Susun list baris teks
+      const teksWaktu = `${formatTanggalIndo(tanggal)} ${jam}`;
+      const lines = [teksWaktu];
+
+      if (alamat) {
+        const linesAlamat = wrapText(ctx, alamat, maxTextWidth);
+        linesAlamat.forEach(line => lines.push(line));
+      }
+
+      // Hitung dimensi box background
+      let lebarKotakMax = 0;
+      lines.forEach(line => {
+        const w = ctx.measureText(line).width;
+        if (w > lebarKotakMax) lebarKotakMax = w;
+      });
+
+      const kotakWidth = lebarKotakMax + (padding * 2);
+      const kotakHeight = (lines.length * lineSpacing) + (padding * 1.2) - (lineSpacing - fontSize);
+
+      // Tentukan koordinat (X, Y) berdasarkan pilihan posisi
+      let x = 0, y = 0;
+      if (posisi.includes('right')) {
+        x = canvas.width - kotakWidth - margin;
+      } else {
+        x = margin;
+      }
+
+      if (posisi.includes('bottom')) {
+        y = canvas.height - kotakHeight - margin;
+      } else {
+        y = margin;
+      }
+
+      // Gambar Kotak Background
+      if (bgStyle !== 'none') {
+        ctx.fillStyle = bgStyle;
+        // Berikan rounded corner halus pada stempel
+        drawRoundedRect(ctx, x, y, kotakWidth, kotakHeight, fontSize * 0.25);
+      }
+
+      // Gambar Baris-Baris Teks
+      ctx.fillStyle = warnaTeks;
+      ctx.textBaseline = 'top';
+      lines.forEach((line, index) => {
+        ctx.fillText(line, x + padding, y + padding + (index * lineSpacing));
+      });
+    }
+
+    // Helper membuat Rounded Rectangle di Canvas
+    function drawRoundedRect(ctx, x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Helper Format Tanggal Indonesia
+    function formatTanggalIndo(dateStr) {
+      if(!dateStr) return "";
+      const opsi = { year: 'numeric', month: 'short', day: '2-digit' };
+      return new Date(dateStr).toLocaleDateString('en-US', opsi).toUpperCase();
+    }
+
+    // STREAMING_CHUNK: Integrating OpenStreetMap APIs...
+    // 4. Fitur Autocomplete Pencarian Alamat Presisi (Filter Indonesia)
+    inputAlamat.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      const query = this.value;
+      
+      if (query.length < 3) {
+        autocompleteList.innerHTML = '';
+        autocompleteList.classList.add('hidden');
+        return;
+      }
+
+      searchTimeout = setTimeout(() => {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5&countrycodes=id&accept-language=id`)
+          .then(res => res.json())
+          .then(data => {
+            autocompleteList.innerHTML = '';
+            if (data.length > 0) {
+              autocompleteList.classList.remove('hidden');
+              data.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer text-xs text-slate-700 transition-colors";
+                div.innerText = item.display_name;
+                div.addEventListener('click', function() {
+                  inputAlamat.value = item.display_name;
+                  autocompleteList.innerHTML = '';
+                  autocompleteList.classList.add('hidden');
+                  drawWatermark();
+                });
+                autocompleteList.appendChild(div);
+              });
+            } else {
+              autocompleteList.classList.add('hidden');
+            }
+          })
+          .catch(err => console.error("Gagal memuat alamat:", err));
+      }, 500);
+    });
+
+    // Menutup dropdown otomatis jika klik di luar input
+    document.addEventListener('click', function (e) {
+      if (e.target !== inputAlamat) {
+        autocompleteList.innerHTML = '';
+        autocompleteList.classList.add('hidden');
+      }
+    });
+
+    // 5. Fitur Ambil Lokasi GPS Perangkat Saat Ini
+    btnGPS.addEventListener('click', function() {
+      if (!navigator.geolocation) {
+        alert("Browser atau perangkat Anda tidak mendukung pelacakan GPS.");
+        return;
+      }
+      
+      btnGPS.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i>';
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=id`)
+            .then(res => res.json())
+            .then(data => {
+              if (data && data.display_name) {
+                inputAlamat.value = data.display_name;
+              } else {
+                inputAlamat.value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+              }
+              drawWatermark();
+              btnGPS.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>';
+            })
+            .catch(() => {
+              inputAlamat.value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+              drawWatermark();
+              btnGPS.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>';
+            });
+        },
+        () => {
+          alert("Gagal mendeteksi GPS. Pastikan izin lokasi (GPS) di browser dan perangkat Anda telah diaktifkan.");
+          btnGPS.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i>';
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    });
+
+    // 6. Unduh Hasil Edit (High-Resolution)
+    btnDownload.addEventListener('click', function() {
+      if (!imgObj) return;
+      
+      const link = document.createElement('a');
+      link.download = 'Photo_Timestamp_' + Date.now() + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  </script>
+</body>
+</html>
